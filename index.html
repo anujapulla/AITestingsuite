@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureTraces — Automated Test Suite</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --bg4: #1e2d42;
+    --border: rgba(99,179,237,0.15);
+    --border2: rgba(99,179,237,0.3);
+    --text: #e8f4fd;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent3: #93c5fd;
+    --green: #10b981;
+    --green2: #34d399;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --teal: #06b6d4;
+    --pink: #ec4899;
+    --radius: 10px;
+    --radius2: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  /* LAYOUT */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .main { flex: 1; overflow-y: auto; }
+
+  /* SIDEBAR */
+  .logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+  .logo-mark { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+  .logo-text { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
+  .nav { padding: 12px 10px; flex: 1; }
+  .nav-section { font-size: 10px; color: var(--text3); letter-spacing: 1.2px; text-transform: uppercase; padding: 8px 8px 4px; margin-top: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius2); color: var(--text2); cursor: pointer; transition: all 0.15s; font-size: 13px; margin-bottom: 1px; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(59,130,246,0.15); color: var(--accent2); }
+  .nav-item i { font-size: 15px; }
+  .nav-badge { margin-left: auto; background: var(--accent); color: white; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+  .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; }
+
+  /* PAGES */
+  .page { display: none; padding: 24px; min-height: 100%; }
+  .page.active { display: block; }
+
+  /* HEADER */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+  /* CARDS */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .card-sm { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2); padding: 12px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius2); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: #059669; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  /* BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green2); }
+  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+  .badge-amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent2); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .badge-teal { background: rgba(6,182,212,0.15); color: #22d3ee; }
+  .badge-gray { background: rgba(100,116,139,0.15); color: var(--text2); }
+
+  /* GRID */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  @media(max-width:900px){.grid4{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}}
+
+  /* STAT CARD */
+  .stat { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 700; }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .stat-green { color: var(--green2); }
+  .stat-blue { color: var(--accent2); }
+  .stat-amber { color: #fbbf24; }
+  .stat-red { color: #f87171; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(99,179,237,0.06); font-size: 13px; color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td.name { color: var(--text); font-weight: 500; }
+
+  /* FORM */
+  label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  input, select, textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2); color: var(--text); padding: 8px 11px; font-size: 13px; outline: none; transition: border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+  .form-row { margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* TAG */
+  .tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--bg4); color: var(--text2); border: 1px solid var(--border); margin: 2px; }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* PROGRESS */
+  .progress-bar { background: var(--bg4); border-radius: 20px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 20px; transition: width 1.5s ease; }
+
+  /* STATUS DOT */
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-green { background: var(--green2); box-shadow: 0 0 6px rgba(52,211,153,0.6); }
+  .dot-red { background: #f87171; }
+  .dot-amber { background: #fbbf24; }
+  .dot-blue { background: var(--accent2); }
+
+  /* SYSTEM CARDS */
+  .sys-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all 0.2s; }
+  .sys-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .sys-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+  .sys-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+  .sys-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .sys-desc { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .sys-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); margin-top: 10px; }
+
+  /* CATEGORY PILL */
+  .cat-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin: 3px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .cat-pill.active { border-color: currentColor; }
+
+  /* PROMPT BOX */
+  .prompt-area { position: relative; }
+  .prompt-area textarea { min-height: 90px; resize: none; font-family: inherit; }
+  .prompt-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+
+  /* AI GENERATING */
+  .ai-generating { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--accent2); }
+  .ai-generating.show { display: flex; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESULT ROW */
+  .result-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius2); margin-bottom: 4px; background: var(--bg3); border: 1px solid var(--border); }
+  .result-icon { font-size: 16px; }
+  .result-name { flex: 1; font-size: 13px; color: var(--text); }
+  .result-time { font-size: 12px; color: var(--text3); }
+  .result-status { font-size: 12px; font-weight: 600; }
+  .result-pass { color: var(--green2); }
+  .result-fail { color: #f87171; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 8px 16px; font-size: 13px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+  /* MODAL */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 560px; max-width: 95vw; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+
+  /* CHART WRAP */
+  .chart-box { position: relative; height: 200px; }
+  .chart-box-lg { position: relative; height: 260px; }
+
+  /* SCHEDULE OPTS */
+  .sched-opt { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius2); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; margin-bottom: 8px; }
+  .sched-opt:hover { border-color: var(--accent); }
+  .sched-opt.selected { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+  .sched-opt input[type=radio] { accent-color: var(--accent); }
+
+  /* SBOM */
+  .sbom-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg3); border-radius: var(--radius2); margin-bottom: 4px; border: 1px solid var(--border); }
+  .sbom-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .sbom-version { font-size: 12px; color: var(--text3); }
+
+  /* CODE */
+  .code-block { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius2); padding: 14px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--teal); overflow-x: auto; white-space: pre; }
+
+  /* VULN */
+  .vuln { padding: 10px 14px; background: var(--bg3); border-radius: var(--radius2); border-left: 3px solid; margin-bottom: 6px; }
+  .vuln-critical { border-color: #ef4444; }
+  .vuln-high { border-color: #f97316; }
+  .vuln-medium { border-color: var(--amber); }
+  .vuln-low { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <div class="logo-icon"><i class="ti ti-shield-check"></i></div>
+        <div>
+          <div class="logo-text">SecureTraces</div>
+          <div class="logo-sub">Test Platform</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><i class="ti ti-dashboard"></i> Dashboard</div>
+      <div class="nav-item" onclick="showPage('systems')"><i class="ti ti-server"></i> Systems <span class="nav-badge">8</span></div>
+      <div class="nav-item" onclick="showPage('testcases')"><i class="ti ti-file-text"></i> Test Cases</div>
+      <div class="nav-item" onclick="showPage('create')"><i class="ti ti-sparkles"></i> AI Create</div>
+      <div class="nav-section">Execution</div>
+      <div class="nav-item" onclick="showPage('execute')"><i class="ti ti-player-play"></i> Execute</div>
+      <div class="nav-item" onclick="showPage('results')"><i class="ti ti-chart-bar"></i> Results</div>
+      <div class="nav-section">Settings</div>
+      <div class="nav-item" onclick="showPage('codebase')"><i class="ti ti-code"></i> Code Analysis</div>
+      <div class="nav-item" onclick="showPage('admin')"><i class="ti ti-settings"></i> Admin / Jira</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">AT</div>
+        <div>
+          <div style="font-size:12px;font-weight:600">Admin User</div>
+          <div style="font-size:11px;color:var(--text3)">admin@acme.com</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ========== DASHBOARD ========== -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Live test suite overview — last updated just now</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('execute')"><i class="ti ti-player-play"></i> Run Suite</button>
+      </div>
+
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat">
+          <div class="stat-label">Pass Rate</div>
+          <div class="stat-value stat-green">94.2%</div>
+          <div class="stat-sub">↑ 2.1% this week</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Tests</div>
+          <div class="stat-value stat-blue">1,284</div>
+          <div class="stat-sub">across 6 groups</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Failures</div>
+          <div class="stat-value stat-red">74</div>
+          <div class="stat-sub">12 new since yesterday</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Avg Duration</div>
+          <div class="stat-value stat-amber">4.3m</div>
+          <div class="stat-sub">per suite run</div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)">Pass / Fail Trend (14 days)</div>
+          <div class="chart-box"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)">Tests by Category</div>
+          <div class="chart-box"><canvas id="catChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Category Health</div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('results')">View All <i class="ti ti-arrow-right"></i></button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${[
+            ['Finance',98,'green'],['Sales CRM',91,'green'],['Manufacturing',87,'amber'],
+            ['HR & Payroll',95,'green'],['Procurement',89,'amber'],['Logistics',76,'red']
+          ].map(([name,pct,col])=>`
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:110px;font-size:13px;color:var(--text2)">${name}</div>
+            <div class="progress-bar" style="flex:1">
+              <div class="progress-fill" style="width:${pct}%;background:var(--${col==='green'?'green2':col==='amber'?'amber':'red'})"></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;width:40px;text-align:right;color:var(--${col==='green'?'green2':col==='amber'?'amber':'red'})">${pct}%</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SYSTEMS ========== -->
+    <div id="page-systems" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Target Systems</div>
+          <div class="page-sub">Configure systems to test against</div>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('addSysModal').classList.add('open')"><i class="ti ti-plus"></i> Add System</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+        ${[
+          {name:'Salesforce',icon:'☁️',color:'#00a1e0',desc:'CRM & Sales Cloud',status:'Connected',tests:284,cat:'Sales / CRM'},
+          {name:'SAP ERP',icon:'🏭',color:'#0070f3',desc:'Finance & Manufacturing',status:'Connected',tests:411,cat:'Finance / MFG'},
+          {name:'ServiceNow',icon:'🔧',color:'#62d84e',desc:'IT Service Management',status:'Connected',tests:156,cat:'IT / Support'},
+          {name:'Workday',icon:'👥',color:'#f5820d',desc:'HR & Payroll',status:'Connected',tests:203,cat:'HR / Payroll'},
+          {name:'Oracle NetSuite',icon:'🟠',color:'#f80000',desc:'Finance & ERP',status:'Connected',tests:178,cat:'Finance'},
+          {name:'HubSpot',icon:'🔶',color:'#ff7a59',desc:'Marketing & CRM',status:'Warning',tests:89,cat:'Marketing'},
+          {name:'Custom App #1',icon:'⚙️',color:'#8b5cf6',desc:'Internal Portal v3.2',status:'Connected',tests:124,cat:'Custom'},
+          {name:'Custom App #2',icon:'🔒',color:'#10b981',desc:'Auth & SSO Service',status:'Offline',tests:39,cat:'Security'},
+        ].map(s=>`
+        <div class="sys-card" onclick="this.classList.toggle('selected')">
+          <div class="sys-icon" style="background:${s.color}22;font-size:22px">${s.icon}</div>
+          <div class="sys-name">${s.name}</div>
+          <div class="sys-desc">${s.desc}</div>
+          <div style="margin-top:8px"><span class="badge badge-blue">${s.cat}</span></div>
+          <div class="sys-status">
+            <span class="dot ${s.status==='Connected'?'dot-green':s.status==='Warning'?'dot-amber':'dot-red'}"></span>
+            ${s.status} · ${s.tests} tests
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ========== TEST CASES ========== -->
+    <div id="page-testcases" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Test Cases</div>
+          <div class="page-sub">1,284 test cases across 6 functional groups</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input placeholder="Search tests..." style="width:200px">
+          <button class="btn btn-primary" onclick="showPage('create')"><i class="ti ti-sparkles"></i> AI Create</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:4px">
+        <span class="cat-pill active" style="color:var(--accent2);background:rgba(59,130,246,0.1)" onclick="filterCat(this,'All')">All (1,284)</span>
+        <span class="cat-pill" style="color:var(--green2);background:rgba(16,185,129,0.08)" onclick="filterCat(this,'Finance')"><i class="ti ti-currency-dollar"></i> Finance (311)</span>
+        <span class="cat-pill" style="color:#f97316;background:rgba(249,115,22,0.08)" onclick="filterCat(this,'Sales')"><i class="ti ti-chart-line"></i> Sales CRM (284)</span>
+        <span class="cat-pill" style="color:var(--purple);background:rgba(139,92,246,0.08)" onclick="filterCat(this,'Manufacturing')"><i class="ti ti-building-factory"></i> Manufacturing (198)</span>
+        <span class="cat-pill" style="color:var(--teal);background:rgba(6,182,212,0.08)" onclick="filterCat(this,'HR')"><i class="ti ti-users"></i> HR & Payroll (203)</span>
+        <span class="cat-pill" style="color:var(--pink);background:rgba(236,72,153,0.08)" onclick="filterCat(this,'Procurement')"><i class="ti ti-shopping-cart"></i> Procurement (167)</span>
+        <span class="cat-pill" style="color:#fbbf24;background:rgba(245,158,11,0.08)" onclick="filterCat(this,'Logistics')"><i class="ti ti-truck"></i> Logistics (121)</span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table id="testTable">
+            <thead>
+              <tr>
+                <th>Test Name</th><th>Category</th><th>System</th><th>Priority</th><th>Last Run</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${[
+                ['Validate AP Invoice Posting','Finance','SAP ERP','Critical','2h ago','Pass'],
+                ['GL Account Reconciliation','Finance','Oracle NetSuite','High','3h ago','Pass'],
+                ['Opportunity Pipeline Sync','Sales CRM','Salesforce','High','1h ago','Pass'],
+                ['Lead Conversion Workflow','Sales CRM','Salesforce','Medium','5h ago','Pass'],
+                ['BOM Explosion Validation','Manufacturing','SAP ERP','Critical','4h ago','Fail'],
+                ['Work Order Routing Check','Manufacturing','SAP ERP','High','6h ago','Pass'],
+                ['Payroll Tax Calculation','HR & Payroll','Workday','Critical','2h ago','Pass'],
+                ['Employee Onboarding Flow','HR & Payroll','Workday','Medium','8h ago','Pass'],
+                ['PO Approval Workflow','Procurement','SAP ERP','High','3h ago','Fail'],
+                ['Vendor Payment Terms','Procurement','Oracle NetSuite','Medium','5h ago','Pass'],
+                ['Shipment Tracking Update','Logistics','Custom App #1','High','7h ago','Pass'],
+                ['Warehouse Inventory Sync','Logistics','Custom App #1','Critical','9h ago','Fail'],
+              ].map(([name,cat,sys,pri,last,stat])=>`
+              <tr>
+                <td class="name">${name}</td>
+                <td><span class="badge badge-blue">${cat}</span></td>
+                <td><span style="color:var(--text2)">${sys}</span></td>
+                <td><span class="badge ${pri==='Critical'?'badge-red':pri==='High'?'badge-amber':'badge-gray'}">${pri}</span></td>
+                <td>${last}</td>
+                <td><span class="badge ${stat==='Pass'?'badge-green':'badge-red'}"><span class="dot ${stat==='Pass'?'dot-green':'dot-red'}" style="width:6px;height:6px;box-shadow:none"></span>${stat}</span></td>
+                <td><button class="btn btn-ghost btn-sm"><i class="ti ti-player-play"></i> Run</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== AI CREATE ========== -->
+    <div id="page-create" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">AI Test Case Creator</div>
+          <div class="page-sub">Describe what you want to test — AI will generate, categorize, and group it</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px"><i class="ti ti-sparkles" style="color:var(--purple)"></i> Describe Your Test</div>
+            <div class="form-row">
+              <label>Target System</label>
+              <select id="createSystem">
+                <option>Salesforce</option><option>SAP ERP</option><option>Workday</option>
+                <option>Oracle NetSuite</option><option>ServiceNow</option><option>Custom App</option>
+              </select>
+            </div>
+            <div class="form-row prompt-area">
+              <label>Describe the test in plain English</label>
+              <textarea id="promptInput" placeholder="e.g. Test that when a sales rep closes an opportunity in Salesforce above $50,000, it automatically creates an approval workflow and notifies the finance team via email within 5 minutes..."></textarea>
+            </div>
+            <div class="prompt-actions">
+              <div class="ai-generating" id="aiSpinner"><div class="spinner"></div> AI is analyzing your prompt...</div>
+              <button class="btn btn-primary" onclick="generateTestCase()"><i class="ti ti-sparkles"></i> Generate Test Case</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Quick Templates</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              ${[
+                ['💰 Finance','Validate month-end close journal entries post correctly to GL'],
+                ['📊 Sales','Verify quote-to-cash cycle completes within SLA thresholds'],
+                ['🏭 Manufacturing','Check BOM components availability before work order release'],
+                ['👥 HR','Test new hire onboarding checklist completion and notifications'],
+                ['🛒 Procurement','Validate 3-way match for invoice, PO, and goods receipt'],
+              ].map(([icon,text])=>`
+              <div class="card-sm" style="cursor:pointer" onclick="document.getElementById('promptInput').value='${text}'">
+                <div style="font-size:13px;color:var(--text)">${icon} ${text}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" id="generatedCard" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-size:13px;font-weight:600;color:var(--text)"><i class="ti ti-check-circle" style="color:var(--green2)"></i> Test Case Generated</div>
+              <button class="btn btn-green btn-sm" onclick="saveTestCase()"><i class="ti ti-device-floppy"></i> Save</button>
+            </div>
+            <div id="generatedContent"></div>
+          </div>
+
+          <div class="card" id="placeholderCard">
+            <div style="text-align:center;padding:40px 20px;color:var(--text3)">
+              <i class="ti ti-sparkles" style="font-size:40px;color:var(--purple);opacity:0.4"></i>
+              <div style="margin-top:12px;font-size:14px">Enter a prompt and click Generate</div>
+              <div style="font-size:12px;margin-top:6px">AI will automatically categorize, group, and structure your test case</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== EXECUTE ========== -->
+    <div id="page-execute" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Test Execution</div>
+          <div class="page-sub">Schedule and run test groups or individual cases</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"><i class="ti ti-list-check"></i> Select Test Groups</div>
+            <div style="display:flex;flex-direction:column;gap:6px" id="groupCheckboxes">
+              ${[
+                ['Finance',311,'green2'],['Sales CRM',284,'amber'],['Manufacturing',198,'purple'],
+                ['HR & Payroll',203,'teal'],['Procurement',167,'pink'],['Logistics',121,'accent2']
+              ].map(([name,count,col])=>`
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius2);border:1px solid var(--border);cursor:pointer">
+                <input type="checkbox" checked style="accent-color:var(--accent);width:15px;height:15px">
+                <span style="flex:1;font-size:13px;color:var(--text)">${name}</span>
+                <span style="font-size:12px;color:var(--${col})">${count} tests</span>
+              </label>`).join('')}
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"><i class="ti ti-filter"></i> Filters</div>
+            <div class="form-row">
+              <label>Target System</label>
+              <select><option>All Systems</option><option>Salesforce</option><option>SAP ERP</option><option>Workday</option></select>
+            </div>
+            <div class="form-row">
+              <label>Priority</label>
+              <select><option>All Priorities</option><option>Critical Only</option><option>High + Critical</option></select>
+            </div>
+            <div class="form-row">
+              <label>Environment</label>
+              <select><option>Staging</option><option>QA</option><option>Production (read-only)</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"><i class="ti ti-clock"></i> Execution Schedule</div>
+            <div class="sched-opt selected" onclick="selectSched(this,'immediate')">
+              <input type="radio" name="sched" checked>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Run Immediately</div>
+                <div style="font-size:12px;color:var(--text3)">Start execution right now</div>
+              </div>
+            </div>
+            <div class="sched-opt" onclick="selectSched(this,'deferred')">
+              <input type="radio" name="sched">
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Schedule for Later</div>
+                <div style="font-size:12px;color:var(--text3)">Defer to a specific date and time</div>
+              </div>
+            </div>
+            <div id="schedDatePicker" style="display:none;margin-top:12px">
+              <div class="form-grid">
+                <div class="form-row"><label>Date</label><input type="date"></div>
+                <div class="form-row"><label>Time</label><input type="time" value="09:00"></div>
+              </div>
+              <div class="form-row">
+                <label>Recurrence</label>
+                <select><option>One-time</option><option>Daily</option><option>Weekly</option><option>Monthly</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px"><i class="ti ti-bell"></i> Notifications</div>
+            <div class="form-row">
+              <label>Notify on Failure</label>
+              <input placeholder="team@acme.com, ops@acme.com">
+            </div>
+            <div class="form-row">
+              <label>Slack Channel</label>
+              <input placeholder="#qa-alerts">
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" checked style="accent-color:var(--accent)">
+              <span>Create Jira tickets for failures</span>
+            </label>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px" onclick="startExecution()">
+              <i class="ti ti-player-play"></i> Execute Selected (984 tests)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution in progress -->
+      <div id="execProgress" style="display:none;margin-top:20px">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)"><span class="dot dot-green" style="margin-right:6px"></span>Execution Running...</div>
+            <span class="badge badge-blue">984 / 984 queued</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px" id="liveResults"></div>
+          <div style="margin-top:14px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px">
+              <span id="execPct">0%</span><span id="execCount">0 / 984</span>
+            </div>
+            <div class="progress-bar" style="height:8px">
+              <div class="progress-fill" id="execBar" style="width:0%;background:linear-gradient(90deg,var(--accent),var(--green))"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== RESULTS ========== -->
+    <div id="page-results" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Test Results</div>
+          <div class="page-sub">Suite run completed · June 23, 2026 · 4m 17s</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost"><i class="ti ti-download"></i> Export PDF</button>
+          <button class="btn btn-primary"><i class="ti ti-refresh"></i> Re-run Failed</button>
+        </div>
+      </div>
+
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat"><div class="stat-label">Pass Rate</div><div class="stat-value stat-green">94.2%</div><div class="stat-sub">1,210 passed</div></div>
+        <div class="stat"><div class="stat-label">Failed</div><div class="stat-value stat-red">74</div><div class="stat-sub">12 new failures</div></div>
+        <div class="stat"><div class="stat-label">Skipped</div><div class="stat-value stat-amber">0</div><div class="stat-sub">all tests ran</div></div>
+        <div class="stat"><div class="stat-label">Duration</div><div class="stat-value stat-blue">4m 17s</div><div class="stat-sub">avg 0.2s/test</div></div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Pass Rate by Category</div>
+          <div class="chart-box-lg"><canvas id="resultBarChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Failure Distribution</div>
+          <div class="chart-box-lg"><canvas id="failPieChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Pass Rate Over Time</div>
+        <div class="chart-box-lg"><canvas id="resultTrendChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Failed Tests <span class="badge badge-red" style="margin-left:6px">74</span></div>
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-ticket"></i> Create Jira for All</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${[
+            ['BOM Explosion Validation','Manufacturing','SAP ERP','CRITICAL','2.1s'],
+            ['PO Approval Workflow','Procurement','SAP ERP','HIGH','1.4s'],
+            ['Warehouse Inventory Sync','Logistics','Custom App #1','CRITICAL','3.2s'],
+            ['Freight Cost Calculation','Logistics','Custom App #1','MEDIUM','0.8s'],
+            ['Tax Code Assignment - EU','Finance','Oracle NetSuite','HIGH','1.1s'],
+            ['Commission Payout Trigger','Sales CRM','Salesforce','MEDIUM','0.9s'],
+          ].map(([name,cat,sys,pri,dur])=>`
+          <div class="result-row">
+            <i class="ti ti-circle-x result-icon" style="color:#f87171"></i>
+            <div class="result-name">${name}</div>
+            <span class="badge badge-blue" style="font-size:11px">${cat}</span>
+            <span style="font-size:12px;color:var(--text3)">${sys}</span>
+            <span class="badge ${pri==='CRITICAL'?'badge-red':'badge-amber'}" style="font-size:10px">${pri}</span>
+            <div class="result-time">${dur}</div>
+            <button class="btn btn-ghost btn-sm"><i class="ti ti-ticket"></i></button>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CODE ANALYSIS ========== -->
+    <div id="page-codebase" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Code Analysis</div>
+          <div class="page-sub">Upload codebase for automated testing, SBOM, and security scanning</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'code-upload')">Upload & Test</div>
+        <div class="tab" onclick="switchTab(this,'code-sbom')">SBOM</div>
+        <div class="tab" onclick="switchTab(this,'code-security')">Security Scan</div>
+        <div class="tab" onclick="switchTab(this,'code-results')">Code Test Results</div>
+      </div>
+
+      <!-- UPLOAD TAB -->
+      <div id="code-upload" class="tab-content">
+        <div class="grid2">
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"><i class="ti ti-upload"></i> Upload Codebase</div>
+            <div style="border:2px dashed var(--border2);border-radius:var(--radius);padding:30px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="simulateUpload()">
+              <i class="ti ti-folder-upload" style="font-size:32px;color:var(--text3)"></i>
+              <div style="color:var(--text2);margin-top:8px;font-size:13px">Drop folder or click to browse</div>
+              <div style="color:var(--text3);font-size:12px;margin-top:4px">ZIP, Git repo URL, or directory</div>
+            </div>
+            <div class="form-row"><label>Or paste Git URL</label><input placeholder="https://github.com/acme/api-service.git"></div>
+            <div class="form-row"><label>Language / Framework</label><select><option>Auto-detect</option><option>Node.js</option><option>Python</option><option>Java</option><option>Go</option><option>.NET/C#</option></select></div>
+            <div class="form-row"><label>Branch</label><input value="main"></div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="runCodeAnalysis()"><i class="ti ti-scan"></i> Analyze Codebase</button>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px"><i class="ti ti-settings"></i> Analysis Options</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${[
+                ['Generate unit tests from code','checked'],['Run SAST security scan','checked'],
+                ['Create SBOM (Software Bill of Materials)','checked'],['Dependency vulnerability check','checked'],
+                ['Code coverage analysis','checked'],['API contract testing',''],
+                ['Performance baseline testing',''],
+              ].map(([label,chk])=>`
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+                <input type="checkbox" ${chk} style="accent-color:var(--accent)"> ${label}
+              </label>`).join('')}
+            </div>
+            <hr class="divider">
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Detected Structure</div>
+            <div id="codeStructure">
+              <div style="color:var(--text3);font-size:13px">Upload a codebase to see structure analysis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SBOM TAB -->
+      <div id="code-sbom" class="tab-content" style="display:none">
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Software Bill of Materials <span class="badge badge-green" style="margin-left:6px">SPDX 2.3</span></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export SPDX</button>
+              <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CycloneDX</button>
+            </div>
+          </div>
+          <div class="grid3" style="margin-bottom:16px">
+            <div class="stat"><div class="stat-label">Total Components</div><div class="stat-value stat-blue">147</div></div>
+            <div class="stat"><div class="stat-label">Direct Deps</div><div class="stat-value stat-green">38</div></div>
+            <div class="stat"><div class="stat-label">Vulnerabilities</div><div class="stat-value stat-red">12</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${[
+              ['express','4.18.2','MIT','✓ Clean'],['lodash','4.17.21','MIT','⚠ CVE-2021-23337'],
+              ['jsonwebtoken','9.0.0','MIT','✓ Clean'],['axios','1.4.0','MIT','✓ Clean'],
+              ['moment','2.29.4','MIT','⚠ Deprecated'],['bcryptjs','2.4.3','MIT','✓ Clean'],
+              ['dotenv','16.1.4','BSD-2','✓ Clean'],['pg','8.11.0','MIT','✓ Clean'],
+              ['helmet','7.0.0','MIT','✓ Clean'],['cors','2.8.5','MIT','✓ Clean'],
+            ].map(([name,ver,lic,status])=>`
+            <div class="sbom-item">
+              <div><div class="sbom-name">${name}</div><div class="sbom-version">v${ver}</div></div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="badge badge-gray">${lic}</span>
+                <span style="font-size:12px;color:${status.includes('✓')?'var(--green2)':status.includes('⚠')?'var(--amber)':'var(--text3)'}">${status}</span>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- SECURITY TAB -->
+      <div id="code-security" class="tab-content" style="display:none">
+        <div class="grid3" style="margin-bottom:16px">
+          <div class="stat"><div class="stat-label">Critical</div><div class="stat-value stat-red">2</div></div>
+          <div class="stat"><div class="stat-label">High</div><div class="stat-value stat-amber">5</div></div>
+          <div class="stat"><div class="stat-label">Medium / Low</div><div class="stat-value stat-blue">14</div></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Security Findings</div>
+          ${[
+            ['CRITICAL','SQL Injection','src/routes/users.js:142','Unsanitized user input passed directly to database query'],
+            ['CRITICAL','Hardcoded Secret','src/config/db.js:8','AWS credentials hardcoded in source file'],
+            ['HIGH','XSS Vulnerability','src/views/dashboard.ejs:67','User-controlled data rendered without sanitization'],
+            ['HIGH','Insecure Dependency','package.json','lodash@4.17.21 — Prototype pollution (CVE-2021-23337)'],
+            ['HIGH','Missing Auth Check','src/api/admin.js:23','Admin endpoint accessible without authentication'],
+            ['MEDIUM','Weak CORS Policy','src/app.js:15','CORS configured with wildcard origin (*)'],
+            ['MEDIUM','Missing Rate Limit','src/routes/auth.js:8','Login endpoint has no rate limiting'],
+          ].map(([sev,title,loc,desc])=>`
+          <div class="vuln vuln-${sev.toLowerCase()}" style="margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="badge ${sev==='CRITICAL'?'badge-red':sev==='HIGH'?'badge-amber':'badge-blue'}">${sev}</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text)">${title}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:2px"><i class="ti ti-file-code" style="font-size:11px"></i> ${loc}</div>
+            <div style="font-size:12px;color:var(--text2)">${desc}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- CODE RESULTS TAB -->
+      <div id="code-results" class="tab-content" style="display:none">
+        <div class="grid4" style="margin-bottom:16px">
+          <div class="stat"><div class="stat-label">Tests Generated</div><div class="stat-value stat-blue">203</div></div>
+          <div class="stat"><div class="stat-label">Passed</div><div class="stat-value stat-green">178</div></div>
+          <div class="stat"><div class="stat-label">Failed</div><div class="stat-value stat-red">25</div></div>
+          <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value stat-amber">82%</div></div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Generated Test Results</div>
+          <div class="code-block">✓ UserService.createUser — validates required fields (12ms)
+✓ UserService.createUser — hashes password before save (8ms)
+✓ UserService.login — returns JWT on valid credentials (15ms)
+✗ UserService.login — rate limiting not enforced (FAIL)
+✓ OrderService.createOrder — validates inventory (22ms)
+✓ OrderService.createOrder — calculates tax correctly (11ms)
+✗ OrderService.processPayment — missing error handling (FAIL)
+✓ AuthMiddleware — rejects expired tokens (6ms)
+✗ AuthMiddleware — bypass possible with null token (FAIL)
+✓ ReportService.generate — returns correct format (18ms)
+...178 passed, 25 failed out of 203 total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ADMIN / JIRA ========== -->
+    <div id="page-admin" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Admin Settings</div>
+          <div class="page-sub">Configure integrations, users, and platform settings</div>
+        </div>
+        <button class="btn btn-green"><i class="ti ti-device-floppy"></i> Save All</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'admin-jira')">Jira Integration</div>
+        <div class="tab" onclick="switchTab(this,'admin-general')">General</div>
+        <div class="tab" onclick="switchTab(this,'admin-users')">Users</div>
+        <div class="tab" onclick="switchTab(this,'admin-notifications')">Notifications</div>
+      </div>
+
+      <!-- JIRA TAB -->
+      <div id="admin-jira" class="tab-content">
+        <div class="grid2">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+              <div style="width:36px;height:36px;background:#0052cc;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🔵</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--text)">Jira Integration</div>
+                <div style="font-size:12px;color:var(--text3)">Atlassian Cloud & Server</div>
+              </div>
+              <span class="badge badge-green" style="margin-left:auto"><span class="dot dot-green" style="width:6px;height:6px;box-shadow:none"></span>Connected</span>
+            </div>
+            <div class="form-row"><label>Jira Base URL</label><input value="https://acme.atlassian.net"></div>
+            <div class="form-row"><label>Username / Email</label><input value="qa-bot@acme.com"></div>
+            <div class="form-row"><label>API Token</label><input type="password" value="ATATxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
+            <div class="form-row"><label>Default Project Key</label><input value="QA"></div>
+            <div class="form-row"><label>Issue Type for Failures</label><select><option>Bug</option><option>Task</option><option>Story</option></select></div>
+            <div class="form-row"><label>REST API Version</label><select><option>v3 (Recommended)</option><option>v2</option></select></div>
+            <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:4px" onclick="testJiraConn()"><i class="ti ti-plug"></i> Test Connection</button>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Ticket Automation Rules</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                ${[
+                  ['Auto-create ticket on CRITICAL failure','checked'],
+                  ['Auto-create ticket on HIGH failure','checked'],
+                  ['Auto-assign to failing system owner','checked'],
+                  ['Add test trace/screenshot attachment','checked'],
+                  ['Link ticket to test case ID','checked'],
+                  ['Close ticket when test re-passes',''],
+                  ['Set priority from test severity','checked'],
+                ].map(([label,chk])=>`
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+                  <input type="checkbox" ${chk} style="accent-color:var(--accent)"> ${label}
+                </label>`).join('')}
+              </div>
+            </div>
+
+            <div class="card">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Recent Jira Tickets</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                ${[
+                  ['QA-284','BOM Explosion Validation fail','OPEN','Critical'],
+                  ['QA-283','PO Approval Workflow fail','IN PROGRESS','High'],
+                  ['QA-281','Warehouse Inventory Sync fail','OPEN','Critical'],
+                  ['QA-279','Freight Cost Calculation fail','OPEN','Medium'],
+                ].map(([id,name,status,pri])=>`
+                <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:var(--radius2)">
+                  <span style="font-size:12px;font-weight:700;color:#0052cc;background:#e3f2fd;padding:2px 6px;border-radius:3px">${id}</span>
+                  <span style="flex:1;font-size:12px;color:var(--text2)">${name}</span>
+                  <span class="badge ${status==='OPEN'?'badge-red':status==='IN PROGRESS'?'badge-amber':'badge-green'}" style="font-size:10px">${status}</span>
+                </div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERAL TAB -->
+      <div id="admin-general" class="tab-content" style="display:none">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Platform Configuration</div>
+          <div class="form-grid">
+            <div class="form-row"><label>Organization Name</label><input value="Acme Corporation"></div>
+            <div class="form-row"><label>Default Environment</label><select><option>Staging</option><option>QA</option><option>Production</option></select></div>
+            <div class="form-row"><label>Parallel Workers</label><input type="number" value="8"></div>
+            <div class="form-row"><label>Test Timeout (seconds)</label><input type="number" value="30"></div>
+            <div class="form-row"><label>Retry Failed Tests</label><select><option>2x</option><option>1x</option><option>3x</option><option>None</option></select></div>
+            <div class="form-row"><label>Screenshot on Failure</label><select><option>Always</option><option>Never</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS TAB -->
+      <div id="admin-users" class="tab-content" style="display:none">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Platform Users</div>
+            <button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> Invite User</button>
+          </div>
+          <table>
+            <thead><tr><th>User</th><th>Role</th><th>Groups Access</th><th>Last Active</th><th>Status</th></tr></thead>
+            <tbody>
+              ${[
+                ['Admin User','admin@acme.com','Super Admin','All','Just now','Active'],
+                ['Sarah Chen','s.chen@acme.com','QA Lead','All','2h ago','Active'],
+                ['Marcus Roy','m.roy@acme.com','Developer','Finance, Sales','1d ago','Active'],
+                ['Jenny Park','j.park@acme.com','Viewer','HR, Procurement','3d ago','Active'],
+              ].map(([name,email,role,grp,last,stat])=>`
+              <tr>
+                <td><div class="name">${name}</div><div style="font-size:12px;color:var(--text3)">${email}</div></td>
+                <td><span class="badge ${role==='Super Admin'?'badge-purple':'role==='QA Lead'?'badge-blue':'badge-gray'}">${role}</span></td>
+                <td style="font-size:12px">${grp}</td>
+                <td>${last}</td>
+                <td><span class="badge badge-green">${stat}</span></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS TAB -->
+      <div id="admin-notifications" class="tab-content" style="display:none">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Notification Channels</div>
+          <div class="form-row"><label>Email Recipients (failures)</label><input value="qa@acme.com, ops@acme.com"></div>
+          <div class="form-row"><label>Slack Webhook URL</label><input value="https://hooks.slack.com/services/T00..."></div>
+          <div class="form-row"><label>Slack Channel</label><input value="#qa-alerts"></div>
+          <div class="form-row"><label>PagerDuty Integration Key</label><input placeholder="Optional — for critical failures"></div>
+          <hr class="divider">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Notify When</div>
+          ${[
+            ['Suite run completes','checked'],['Critical test fails','checked'],
+            ['Pass rate drops below 90%','checked'],['New test case added',''],
+            ['Scheduled run is missed','checked'],
+          ].map(([label,chk])=>`
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:8px">
+            <input type="checkbox" ${chk} style="accent-color:var(--accent)"> ${label}
+          </label>`).join('')}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- ADD SYSTEM MODAL -->
+<div class="modal-bg" id="addSysModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Target System</div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('addSysModal').classList.remove('open')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row"><label>System Name</label><input placeholder="e.g. My Custom App"></div>
+    <div class="form-row"><label>Base URL</label><input placeholder="https://app.example.com"></div>
+    <div class="form-row"><label>Type</label><select><option>Web Application</option><option>REST API</option><option>SOAP / XML</option><option>GraphQL</option><option>Salesforce</option><option>SAP</option></select></div>
+    <div class="form-row"><label>Category</label><select><option>Finance</option><option>Sales CRM</option><option>Manufacturing</option><option>HR & Payroll</option><option>Procurement</option><option>Logistics</option><option>Custom</option></select></div>
+    <div class="form-row"><label>Auth Method</label><select><option>API Key</option><option>OAuth 2.0</option><option>Basic Auth</option><option>SAML SSO</option></select></div>
+    <div class="form-row"><label>Credential / Token</label><input type="password" placeholder="••••••••••••"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="document.getElementById('addSysModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('addSysModal').classList.remove('open')"><i class="ti ti-check"></i> Add System</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+name+"'")) n.classList.add('active');
+  });
+  if (name === 'results') setTimeout(initResultCharts, 100);
+  if (name === 'dashboard') setTimeout(initDashCharts, 100);
+}
+
+function filterCat(el, cat) {
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function switchTab(el, tabId) {
+  const tabs = el.closest('.tabs').nextElementSibling;
+  const section = el.closest('.page') || el.closest('.modal');
+  section.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  section.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const target = document.getElementById(tabId);
+  if (target) target.style.display = 'block';
+}
+
+function selectSched(el, type) {
+  document.querySelectorAll('.sched-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+  document.getElementById('schedDatePicker').style.display = type === 'deferred' ? 'block' : 'none';
+}
+
+let execInterval;
+function startExecution() {
+  const prog = document.getElementById('execProgress');
+  prog.style.display = 'block';
+  prog.scrollIntoView({behavior:'smooth'});
+  const liveRes = document.getElementById('liveResults');
+  liveRes.innerHTML = '';
+  const tests = [
+    ['Finance: GL Account Reconciliation','pass'],['Finance: AP Invoice Posting','pass'],
+    ['Sales: Opportunity Sync','pass'],['Sales: Lead Conversion','pass'],
+    ['Manufacturing: BOM Explosion','fail'],['Manufacturing: Work Order Routing','pass'],
+    ['HR: Payroll Tax Calc','pass'],['HR: Employee Onboarding','pass'],
+    ['Procurement: PO Approval','fail'],['Logistics: Shipment Tracking','pass'],
+  ];
+  let i = 0;
+  execInterval = setInterval(() => {
+    if (i >= tests.length) { clearInterval(execInterval); return; }
+    const [name, status] = tests[i];
+    const div = document.createElement('div');
+    div.className = 'result-row';
+    div.innerHTML = `<i class="ti ti-${status==='pass'?'circle-check':'circle-x'} result-icon" style="color:${status==='pass'?'var(--green2)':'#f87171'}"></i><div class="result-name">${name}</div><div class="result-status result-${status}">${status.toUpperCase()}</div>`;
+    liveRes.appendChild(div);
+    i++;
+    const pct = Math.round((i/tests.length)*100);
+    document.getElementById('execBar').style.width = pct+'%';
+    document.getElementById('execPct').textContent = pct+'%';
+    document.getElementById('execCount').textContent = (i*98)+' / 984';
+  }, 600);
+}
+
+let aiTimeout;
+function generateTestCase() {
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { document.getElementById('promptInput').placeholder = 'Please describe the test case first...'; return; }
+  document.getElementById('aiSpinner').classList.add('show');
+  document.getElementById('generatedCard').style.display = 'none';
+  document.getElementById('placeholderCard').style.display = 'none';
+  clearTimeout(aiTimeout);
+  aiTimeout = setTimeout(() => {
+    document.getElementById('aiSpinner').classList.remove('show');
+    const sys = document.getElementById('createSystem').value;
+    const cats = detectCategory(prompt);
+    const content = `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+          ${cats.map(c=>`<span class="badge badge-blue">${c}</span>`).join('')}
+          <span class="badge badge-purple">AI Generated</span>
+        </div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">${generateTitle(prompt)}</div>
+        <div style="font-size:12px;color:var(--text3)">${sys} · Functional Test · Priority: High</div>
+      </div>
+      <hr class="divider">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:600">TEST STEPS</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+        ${generateSteps(prompt).map((s,i)=>`
+        <div style="display:flex;gap:10px;font-size:13px">
+          <span style="color:var(--accent2);font-weight:600;min-width:18px">${i+1}.</span>
+          <span style="color:var(--text2)">${s}</span>
+        </div>`).join('')}
+      </div>
+      <hr class="divider">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">EXPECTED RESULT</div>
+      <div style="font-size:13px;color:var(--green2);background:rgba(16,185,129,0.08);padding:8px;border-radius:6px;border-left:2px solid var(--green)">
+        ${generateExpected(prompt)}
+      </div>`;
+    document.getElementById('generatedContent').innerHTML = content;
+    document.getElementById('generatedCard').style.display = 'block';
+    document.getElementById('placeholderCard').style.display = 'none';
+  }, 2200);
+}
+
+function detectCategory(prompt) {
+  const p = prompt.toLowerCase();
+  const cats = [];
+  if(p.includes('invoice')||p.includes('gl')||p.includes('finance')||p.includes('payment')||p.includes('tax')||p.includes('$')) cats.push('Finance');
+  if(p.includes('opportunit')||p.includes('lead')||p.includes('quote')||p.includes('sales')||p.includes('crm')) cats.push('Sales CRM');
+  if(p.includes('bom')||p.includes('manufactur')||p.includes('work order')||p.includes('inventory')) cats.push('Manufacturing');
+  if(p.includes('payroll')||p.includes('employee')||p.includes('hr')||p.includes('onboard')) cats.push('HR & Payroll');
+  if(p.includes('po ')||p.includes('vendor')||p.includes('purchas')||p.includes('approval')) cats.push('Procurement');
+  if(cats.length === 0) cats.push('General');
+  return cats;
+}
+
+function generateTitle(prompt) {
+  const words = prompt.replace(/[^a-zA-Z\s]/g,'').split(' ').filter(Boolean);
+  const key = words.slice(0,7).join(' ');
+  return key.charAt(0).toUpperCase() + key.slice(1) + ' Validation';
+}
+
+function generateSteps(prompt) {
+  return [
+    'Navigate to the target system and authenticate with test credentials',
+    'Set up required test data and preconditions in the system',
+    'Execute the primary action described in the test scenario',
+    'Verify the intermediate state and any triggered workflows',
+    'Confirm all expected notifications and side effects occurred',
+    'Validate final data state matches expected outcome',
+    'Clean up test data and restore system to pre-test state',
+  ];
+}
+
+function generateExpected(prompt) {
+  return 'System completes the described workflow successfully, all data is persisted correctly, notifications are sent within the defined SLA, and no errors appear in system logs.';
+}
+
+function saveTestCase() {
+  alert('Test case saved and added to the appropriate group! View it in Test Cases.');
+}
+
+function simulateUpload() {
+  const struct = document.getElementById('codeStructure');
+  struct.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px">
+      ${[['Node.js v18','badge-green'],['Express 4.18','badge-blue'],['PostgreSQL','badge-teal'],['React 18','badge-purple']].map(([l,c])=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px;background:var(--bg4);border-radius:var(--radius2)">
+        <span class="badge ${c}">${l}</span>
+        <span style="font-size:12px;color:var(--text3)">Detected</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function runCodeAnalysis() {
+  simulateUpload();
+  alert('Analysis started! Switch to the SBOM, Security Scan, and Code Test Results tabs to view findings.');
+}
+
+function testJiraConn() {
+  const btn = event.currentTarget;
+  btn.innerHTML = '<div class="spinner"></div> Testing...';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="ti ti-check" style="color:var(--green2)"></i> Connected successfully';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-plug"></i> Test Connection'; }, 2000);
+  }, 1500);
+}
+
+// CHARTS
+function chartDefaults() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10 } } },
+    scales: {
+      x: { grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+    }
+  };
+}
+
+function initDashCharts() {
+  const days = ['Jun 10','Jun 11','Jun 12','Jun 13','Jun 14','Jun 15','Jun 16','Jun 17','Jun 18','Jun 19','Jun 20','Jun 21','Jun 22','Jun 23'];
+  const c1 = document.getElementById('trendChart');
+  if (c1._chart) { c1._chart.destroy(); }
+  c1._chart = new Chart(c1, {
+    type: 'line',
+    data: {
+      labels: days,
+      datasets: [
+        { label: 'Pass %', data: [91,92,90,93,94,92,95,93,94,95,93,94,95,94], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', tension: 0.4, pointRadius: 2 },
+        { label: 'Fail %', data: [9,8,10,7,6,8,5,7,6,5,7,6,5,6], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)', tension: 0.4, pointRadius: 2 },
+      ]
+    },
+    options: { ...chartDefaults(), plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10 } } } }
+  });
+
+  const c2 = document.getElementById('catChart');
+  if (c2._chart) c2._chart.destroy();
+  c2._chart = new Chart(c2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Finance','Sales CRM','Manufacturing','HR & Payroll','Procurement','Logistics'],
+      datasets: [{ data: [311,284,198,203,167,121], backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f59e0b'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 8 } } } }
+  });
+}
+
+function initResultCharts() {
+  const c1 = document.getElementById('resultBarChart');
+  if (c1._chart) c1._chart.destroy();
+  c1._chart = new Chart(c1, {
+    type: 'bar',
+    data: {
+      labels: ['Finance','Sales CRM','Manufacturing','HR & Payroll','Procurement','Logistics'],
+      datasets: [
+        { label: 'Pass %', data: [98,91,87,95,89,76], backgroundColor: '#10b981' },
+        { label: 'Fail %', data: [2,9,13,5,11,24], backgroundColor: '#ef4444' },
+      ]
+    },
+    options: { ...chartDefaults(), scales: { x: { stacked: true, grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } }, y: { stacked: true, max: 100, grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } } } }
+  });
+
+  const c2 = document.getElementById('failPieChart');
+  if (c2._chart) c2._chart.destroy();
+  c2._chart = new Chart(c2, {
+    type: 'pie',
+    data: {
+      labels: ['Manufacturing','Logistics','Procurement','Sales CRM','Finance','HR'],
+      datasets: [{ data: [26,18,14,9,4,3], backgroundColor: ['#8b5cf6','#f59e0b','#ec4899','#3b82f6','#10b981','#06b6d4'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 8 } } } }
+  });
+
+  const c3 = document.getElementById('resultTrendChart');
+  if (c3._chart) c3._chart.destroy();
+  c3._chart = new Chart(c3, {
+    type: 'line',
+    data: {
+      labels: ['Jun 10','Jun 11','Jun 12','Jun 13','Jun 14','Jun 15','Jun 16','Jun 17','Jun 18','Jun 19','Jun 20','Jun 21','Jun 22','Jun 23'],
+      datasets: [{ label: 'Pass Rate %', data: [91,92,90,93,94,92,95,93,94,95,93,94,95,94], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.4, fill: true, pointRadius: 3 }]
+    },
+    options: { ...chartDefaults(), plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 10 } } }, scales: { x: { grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } }, y: { min: 85, max: 100, grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#64748b', font: { size: 10 } } } } }
+  });
+}
+
+setTimeout(initDashCharts, 300);
+</script>
+</body>
+</html>
